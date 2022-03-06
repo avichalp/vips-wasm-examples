@@ -13,3 +13,12 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# WASM binary
+*.wasm
+
+node_modules/
+
+.DS_Store
+
+go-vips-latencies.html
