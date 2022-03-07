@@ -21,4 +21,8 @@ node_modules/
 
 .DS_Store
 
+# generated graphs and images
 go-vips-latencies.html
+wasm-vips-latencies.html
+
+output.*
