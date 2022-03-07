@@ -43,22 +43,22 @@ func Resize(inPath string, factor float64) {
 		format = "png"
 	}
 
-	outPath := fmt.Sprintf("../images/output.%g.%s", factor, format)
+	outPath := fmt.Sprintf("../images/output.go_vips.%g.%s", factor, format)
 	err = ioutil.WriteFile(outPath, imageBytes, 0644)
 	checkError(err)
 
 }
 
-func Repeat(N int, inPath string, factor float64) int64 {
-	var sum int64
+func Repeat(N int, inPath string, factor float64) float64 {
+	var sum float64
 
 	for i := 0; i < N; i++ {
 		start := time.Now()
 		Resize(inPath, factor)
-		sum += time.Since(start).Milliseconds()
+		sum += float64(time.Since(start).Milliseconds())
 	}
 
-	return sum / int64(N)
+	return sum / float64(N)
 
 }
 
@@ -66,6 +66,41 @@ type input struct {
 	path   string
 	factor float64
 	format string
+}
+
+func generateChart(titleOpts charts.GlobalOpts, jpegItems, pngItems, webpItems []opts.BarData) *charts.Bar {
+	bar := charts.NewBar()
+
+	bar.SetGlobalOptions(charts.WithLegendOpts(opts.Legend{
+		Show: true,
+	}),
+		titleOpts,
+		charts.WithYAxisOpts(
+			opts.YAxis{
+				AxisLabel: &opts.AxisLabel{
+					Show:      true,
+					Formatter: "{value} ms",
+				}}))
+
+	bar.SetXAxis([]string{
+		"Resize Factor = 0.5x",
+		"Resize Factor = 0.1x",
+		"Resize Factor = 0.05x",
+		"Resize Factor = 0.01x",
+	}).
+		AddSeries("JPEG", jpegItems, charts.WithLabelOpts(opts.Label{
+			Show:      true,
+			Formatter: "JPEG",
+		})).
+		AddSeries("PNG", pngItems, charts.WithLabelOpts(opts.Label{
+			Show:      true,
+			Formatter: "PNG",
+		})).
+		AddSeries("WEBP", webpItems, charts.WithLabelOpts(opts.Label{
+			Show:      true,
+			Formatter: "WEBP",
+		}))
+	return bar
 }
 
 func main() {
@@ -157,40 +192,41 @@ func main() {
 		}
 	}
 
-	bar := charts.NewBar()
-
-	bar.SetGlobalOptions(charts.WithLegendOpts(opts.Legend{
-		Show: true,
-	}), charts.WithTitleOpts(opts.Title{
+	titleOpts := charts.WithTitleOpts(opts.Title{
 		Title:    "Go Vips Latency",
 		Subtitle: "for resize operations",
-	}), charts.WithYAxisOpts(
-		opts.YAxis{
-			AxisLabel: &opts.AxisLabel{
-				Show:      true,
-				Formatter: "{value} ms",
-			}}))
-
-	bar.SetXAxis([]string{
-		"Resize Factor = 0.5x",
-		"Resize Factor = 0.1x",
-		"Resize Factor = 0.05x",
-		"Resize Factor = 0.01x",
-	}).
-		AddSeries("JPEG", jpegItems, charts.WithLabelOpts(opts.Label{
-			Show:      true,
-			Formatter: "JPEG",
-		})).
-		AddSeries("PNG", pngItems, charts.WithLabelOpts(opts.Label{
-			Show:      true,
-			Formatter: "PNG",
-		})).
-		AddSeries("WEBP", webpItems, charts.WithLabelOpts(opts.Label{
-			Show:      true,
-			Formatter: "WEBP",
-		}))
-
+	})
+	bar := generateChart(titleOpts, jpegItems, pngItems, webpItems)
 	// export html file for the Bar Chart
 	f, _ := os.Create("go-vips-latencies.html")
+	bar.Render(f)
+
+	titleOpts = charts.WithTitleOpts(opts.Title{
+		Title:    "WASM Vips Latency",
+		Subtitle: "for resize operations",
+	})
+	// generate WASM VIPS chart from imported data
+	bar = generateChart(titleOpts,
+		[]opts.BarData{
+			{Value: 116.21978175},
+			{Value: 47.6798169},
+			{Value: 25.57381305},
+			{Value: 27.681828449999994},
+		},
+		[]opts.BarData{
+			{Value: 246.77878360000005},
+			{Value: 34.92498075},
+			{Value: 24.464996149999997},
+			{Value: 17.591525949999998},
+		},
+		[]opts.BarData{
+			{Value: 318.08282045},
+			{Value: 43.37513325},
+			{Value: 30.443789099999996},
+			{Value: 20.2916782},
+		},
+	)
+
+	f, _ = os.Create("wasm-vips-latencies.html")
 	bar.Render(f)
 }

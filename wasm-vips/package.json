@@ -1,16 +1,16 @@
 {
   "name": "wasm-examples",
-  "type": "module",
   "version": "1.0.0",
   "description": "",
-  "main": "fibo.js",
+  "type": "module",
+  "main": "wasm_vips.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "csv": "^6.0.5"
+    "wasm-vips": "^0.0.1"
   },
   "devDependencies": {
     "prettier": "2.5.1"
